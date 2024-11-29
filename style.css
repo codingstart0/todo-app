@@ -1,0 +1,38 @@
+/* https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js */
+:root {
+  /* --bs-primary: #fd0dd1; */
+  --gap-md: 10px;
+}
+
+.btn-primary {
+  --bs-btn-color: #ffffff;
+  --bs-btn-bg: var(--bs-primary);
+}
+
+.btn-secondary {
+  margin: 0.3em;
+  min-width: 13em;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.todo-label {
+  text-overflow: ellipsis;
+  max-width: 200px;
+  overflow: hidden;
+}
+.todo-checkbox-and-label-wrapper {
+  display: flex;
+  flex-direction: row;
+  gap: var(--gap-md);
+  justify-content: center;
+  align-items: center;
+}
+.form-check-input:focus {
+  box-shadow: 0 0 0 0.25rem var(--bs-primary);
+}
+
+.todo-label.completed {
+  text-decoration: line-through;
+}
