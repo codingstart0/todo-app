@@ -2,6 +2,79 @@ const localStorageKeyTodos = 'todos';
 let todos = [];
 let lastIndex = 0;
 
+// Callback version
+function getTodosCb(url, callback) {
+  fetch(url)
+    .then((response) => {
+      return response.json();
+    })
+    .then((items) => {
+      callback(items);
+    })
+    .catch((error) => {
+      console.error('Erroras', error);
+      callback(null, error);
+    });
+}
+
+// Promise version
+// function getTodosPromise() {
+//   fetch('http://localhost:3000/todos')
+//     .then((response) => {
+//       return response.json();
+//     }).then(_todos => {
+//       console.log('TODOS:', _todos);
+// todos = _todos;
+// todos?.forEach((todo) => {
+//   addTodoToDOM(todo);
+// });
+//     })
+//     .catch((error) => {
+//       console.error('Erroras', error);
+//       todos = [];
+//     });
+// }
+
+
+// Async/Await version
+// async function getTodos() {
+//   const url = 'http://localhost:3000/todos';
+//   const response = await fetch(url);
+
+//   if (!response.ok) {
+//     throw new Error(`Response status: ${response.status}`);
+//   }
+
+//   const data = await response.json();
+
+//   return data;
+// }
+
+// async function loadTodos() {
+//   todos = await getTodos();
+
+// todos?.forEach((todo) => {
+//   addTodoToDOM(todo);
+// });
+// }
+
+// Callback version
+function onTodosLoaded(items, err) {
+  if (err) {
+    console.error(err);
+    todos = [];
+  } else {
+    todos = items;
+    todos?.forEach((todo) => {
+      addTodoToDOM(todo);
+    });
+  }
+}
+
+getTodosCb('http://localhost:3000/todos', onTodosLoaded);
+
+// loadTodosCb();
+
 function showModal(modalOptions) {
   const modalElement = document.getElementById('modal');
   const modalTitle = document.getElementById('modal-title');
@@ -67,17 +140,17 @@ function registerTodoEvents() {
     .addEventListener('click', clearAllTodos);
 }
 
-function loadTodos() {
-  try {
-    todos = JSON.parse(localStorage.getItem(localStorageKeyTodos)) || [];
-    todos?.forEach((todo) => {
-      addTodoToDOM(todo);
-    });
-  } catch (err) {
-    console.error(err);
-    localStorage.setItem(localStorageKeyTodos, JSON.stringify([]));
-  }
-}
+// function loadTodos() {
+//   try {
+//     todos = JSON.parse(localStorage.getItem(localStorageKeyTodos)) || [];
+//     todos?.forEach((todo) => {
+//       addTodoToDOM(todo);
+//     });
+//   } catch (err) {
+//     console.error(err);
+//     localStorage.setItem(localStorageKeyTodos, JSON.stringify([]));
+//   }
+// }
 
 function getAllTodosText() {
   return todos.map((todo) => {
@@ -328,4 +401,4 @@ function clearAllTodos() {
 registerTodoEvents();
 
 // Load todos on page load
-loadTodos();
+// loadTodos();
