@@ -2,6 +2,29 @@ const localStorageKeyTodos = 'todos';
 let todos = [];
 let lastIndex = 0;
 
+async function getTodos() {
+  const url = 'http://localhost:3000/todos';
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Response status: ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  return data;
+}
+
+getTodos();
+
+async function loadTodosAsync() {
+  todos = await getTodos();
+  todos?.forEach((todo) => {
+    addTodoToDOM(todo);
+  });
+}
+
+loadTodosAsync();
+
 function showModal(modalOptions) {
   const modalElement = document.getElementById('modal');
   const modalTitle = document.getElementById('modal-title');
