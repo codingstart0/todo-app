@@ -3,37 +3,37 @@ let todos = [];
 let lastIndex = 0;
 
 // Callback version
-function getTodosCB(url, callback) {
-  fetch(url)
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error(`Response status: ${response.status}`);
-      }
-      return response.json();
-    })
-    .then((data) => {
-      console.log('Data fetched successfully');
-      callback(null, data);
-    })
-    .catch((error) => {
-      console.error('Error fetching todos:', error.message);
-      callback(error, null);
-    });
-}
+// function getTodosCB(url, callback) {
+//   fetch(url)
+//     .then((response) => {
+//       if (!response.ok) {
+//         throw new Error(`Response status: ${response.status}`);
+//       }
+//       return response.json();
+//     })
+//     .then((data) => {
+//       console.log('Data fetched successfully');
+//       callback(null, data);
+//     })
+//     .catch((error) => {
+//       console.error('Error fetching todos:', error.message);
+//       callback(error, null);
+//     });
+// }
 
-function onTodosLoaded(err, data) {
-  if (err) {
-    console.error(err);
-    todos = [];
-  } else {
-    todos = data;
-    todos?.forEach((todo) => {
-      addTodoToDOM(todo);
-    });
-  }
-}
+// function onTodosLoaded(err, data) {
+//   if (err) {
+//     console.error(err);
+//     todos = [];
+//   } else {
+//     todos = data;
+//     todos?.forEach((todo) => {
+//       addTodoToDOM(todo);
+//     });
+//   }
+// }
 
-getTodosCB('http://localhost:3000/todos', onTodosLoaded);
+// getTodosCB('http://localhost:3000/todos', onTodosLoaded);
 
 // Promise version
 // function getTodosPromise() {
@@ -60,28 +60,28 @@ getTodosCB('http://localhost:3000/todos', onTodosLoaded);
 // getTodosPromise();
 
 // Async/Await version
-// async function getTodos() {
-//   const url = 'http://localhost:3000/todos';
-//   const response = await fetch(url);
-//   if (!response.ok) {
-//     throw new Error(`Response status: ${response.status}`);
-//   }
+async function getTodos() {
+  const url = 'http://localhost:3000/todos';
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Response status: ${response.status}`);
+  }
 
-//   const data = await response.json();
+  const data = await response.json();
 
-//   return data;
-// }
+  return data;
+}
 
-// getTodos();
+getTodos();
 
-// async function loadTodosAsync() {
-//   todos = await getTodos();
-//   todos?.forEach((todo) => {
-//     addTodoToDOM(todo);
-//   });
-// }
+async function loadTodosAsync() {
+  todos = await getTodos();
+  todos?.forEach((todo) => {
+    addTodoToDOM(todo);
+  });
+}
 
-// loadTodosAsync();
+loadTodosAsync();
 
 function showModal(modalOptions) {
   const modalElement = document.getElementById('modal');
