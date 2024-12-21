@@ -2,29 +2,62 @@ const localStorageKeyTodos = 'todos';
 let todos = [];
 let lastIndex = 0;
 
-// Promise version
-function getTodosPromise() {
-  fetch('http://localhost:3000/todos')
+// Callback version
+function getTodosCB(url, callback) {
+  fetch(url)
     .then((response) => {
       if (!response.ok) {
         throw new Error(`Response status: ${response.status}`);
       }
-      
       return response.json();
     })
     .then((data) => {
-      todos = data;
-      todos.forEach((todo) => {
-        addTodoToDOM(todo);
-      });
+      console.log('Data fetched successfully');
+      callback(null, data);
     })
     .catch((error) => {
-      console.error('Error fetching todos:', error);
-      todos = [];
+      console.error('Error fetching todos:', error.message);
+      callback(error, null);
     });
 }
 
-getTodosPromise();
+function onTodosLoaded(err, data) {
+  if (err) {
+    console.error(err);
+    todos = [];
+  } else {
+    todos = data;
+    todos?.forEach((todo) => {
+      addTodoToDOM(todo);
+    });
+  }
+}
+
+getTodosCB('http://localhost:3000/todos', onTodosLoaded);
+
+// Promise version
+// function getTodosPromise() {
+//   fetch('http://localhost:3000/todos')
+//     .then((response) => {
+//       if (!response.ok) {
+//         throw new Error(`Response status: ${response.status}`);
+//       }
+
+//       return response.json();
+//     })
+//     .then((data) => {
+//       todos = data;
+//       todos.forEach((todo) => {
+//         addTodoToDOM(todo);
+//       });
+//     })
+//     .catch((error) => {
+//       console.error('Error fetching todos:', error);
+//       todos = [];
+//     });
+// }
+
+// getTodosPromise();
 
 // Async/Await version
 // async function getTodos() {
