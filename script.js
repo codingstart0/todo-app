@@ -2,78 +2,26 @@ const localStorageKeyTodos = 'todos';
 let todos = [];
 let lastIndex = 0;
 
-// Callback version
-function getTodosCb(url, callback) {
-  fetch(url)
-    .then((response) => {
-      return response.json();
-    })
-    .then((items) => {
-      callback(items);
-    })
-    .catch((error) => {
-      console.error('Erroras', error);
-      callback(null, error);
-    });
-}
+async function getTodos() {
+  const url = 'http://localhost:3000/todos';
+  const response = await fetch(url);
 
-// Promise version
-// function getTodosPromise() {
-//   fetch('http://localhost:3000/todos')
-//     .then((response) => {
-//       return response.json();
-//     }).then(_todos => {
-//       console.log('TODOS:', _todos);
-// todos = _todos;
-// todos?.forEach((todo) => {
-//   addTodoToDOM(todo);
-// });
-//     })
-//     .catch((error) => {
-//       console.error('Erroras', error);
-//       todos = [];
-//     });
-// }
-
-
-// Async/Await version
-// async function getTodos() {
-//   const url = 'http://localhost:3000/todos';
-//   const response = await fetch(url);
-
-//   if (!response.ok) {
-//     throw new Error(`Response status: ${response.status}`);
-//   }
-
-//   const data = await response.json();
-
-//   return data;
-// }
-
-// async function loadTodos() {
-//   todos = await getTodos();
-
-// todos?.forEach((todo) => {
-//   addTodoToDOM(todo);
-// });
-// }
-
-// Callback version
-function onTodosLoaded(items, err) {
-  if (err) {
-    console.error(err);
-    todos = [];
-  } else {
-    todos = items;
-    todos?.forEach((todo) => {
-      addTodoToDOM(todo);
-    });
+  if (!response.ok) {
+    throw new Error(`Response status: ${response.status}`);
   }
+
+  const data = await response.json();
+
+  return data;
 }
 
-getTodosCb('http://localhost:3000/todos', onTodosLoaded);
+async function loadTodos() {
+  todos = await getTodos();
 
-// loadTodosCb();
+  todos?.forEach((todo) => {
+    addTodoToDOM(todo);
+  });
+}
 
 function showModal(modalOptions) {
   const modalElement = document.getElementById('modal');
