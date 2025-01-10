@@ -1,10 +1,10 @@
+const apiUrl = 'http://localhost:3000/todos';
 const localStorageKeyTodos = 'todos';
 let todos = [];
 let lastIndex = 0;
 
 async function getTodos() {
-  const url = 'http://localhost:3000/todos';
-  const response = await fetch(url);
+  const response = await fetch(apiUrl);
 
   if (!response.ok) {
     throw new Error(`Response status: ${response.status}`);
@@ -15,6 +15,27 @@ async function getTodos() {
   return data;
 }
 
+getTodos();
+
+async function postTodo(todo) {
+  const response = await fetch(apiUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(todo),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Response status: ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  return data;
+}
+
+
 async function loadTodos() {
   todos = await getTodos();
 
@@ -22,6 +43,8 @@ async function loadTodos() {
     addTodoToDOM(todo);
   });
 }
+
+loadTodos();
 
 function showModal(modalOptions) {
   const modalElement = document.getElementById('modal');
@@ -88,27 +111,15 @@ function registerTodoEvents() {
     .addEventListener('click', clearAllTodos);
 }
 
-// function loadTodos() {
-//   try {
-//     todos = JSON.parse(localStorage.getItem(localStorageKeyTodos)) || [];
-//     todos?.forEach((todo) => {
-//       addTodoToDOM(todo);
-//     });
-//   } catch (err) {
-//     console.error(err);
-//     localStorage.setItem(localStorageKeyTodos, JSON.stringify([]));
-//   }
-// }
-
 function getAllTodosText() {
   return todos.map((todo) => {
     return todo.text.toUpperCase();
   });
 }
 
-function addTodo() {
+async function addTodo() {
   const input = document.getElementById('todo-input');
-  let todoText = input.value.trim();
+  let todoText = input.value.trim().replace(/\s+/g, ' ');
   const existingTodosText = getAllTodosText(); // Get existing todos from the DOM
 
   if (todoText) {
@@ -123,11 +134,26 @@ function addTodo() {
 
       return;
     }
-    const todo = addNewTodo(todoText);
-    todos.push(todo);
-    addTodoToDOM(todo);
-    saveTodoToLocalStorage(todos);
-    input.value = '';
+  
+    const newTodo = {
+      text: todoText,
+      completed: false,
+      id: uuid.v4(), // Assign a UUID for the todo item
+    };
+
+    try {
+      // Add the new todo to the server using postTodo
+      const addedTodo = await postTodo(newTodo);
+      todos.push(addedTodo); // Update the local `todos` array
+      addTodoToDOM(addedTodo); // Add the todo to the DOM
+      input.value = ''; // Clear the input field
+    } catch (error) {
+      console.error('Error adding todo:', error);
+      showModal({
+        title: 'Error',
+        message: 'Failed to add the todo. Please try again.',
+      });
+    }
   }
 }
 
