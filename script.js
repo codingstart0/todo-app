@@ -35,6 +35,15 @@ async function postTodo(todo) {
   return data;
 }
 
+async function deleteTodo(todoId) {
+  const response = await fetch(`${apiUrl}/${todoId}`, {
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to delete todo. Response status: ${response.status}`);
+  }
+}
 
 async function loadTodos() {
   todos = await getTodos();
@@ -138,12 +147,11 @@ async function addTodo() {
     const newTodo = {
       text: todoText,
       completed: false,
-      id: uuid.v4(), // Assign a UUID for the todo item
+      id: uuid.v4(),
     };
 
     try {
-      // Add the new todo to the server using postTodo
-      const addedTodo = await postTodo(newTodo);
+            const addedTodo = await postTodo(newTodo);
       todos.push(addedTodo); // Update the local `todos` array
       addTodoToDOM(addedTodo); // Add the todo to the DOM
       input.value = ''; // Clear the input field
@@ -221,7 +229,7 @@ function addTodoToDOM(todo) {
   const checkbox = todoCheckboxAndLabelWrapperElement.querySelector(
     'input[type="checkbox"]'
   );
-  const label = createTodoLabel(todo); // Use the function
+  const label = createTodoLabel(todo);
 
   todoCheckboxAndLabelWrapperElement.appendChild(label);
 
@@ -311,10 +319,19 @@ function removeTodoElement(todoId) {
   }
 }
 
-function removeTodo(todo) {
-  const removeTodoItemAndElement = () => {
-    removeTodoItem(todo.id);
-    removeTodoElement(todo.id);
+function removeTodo(todo)  {
+  const removeTodoItemAndElement = async () => {
+    try {
+      await deleteTodo(todo.id); // Delete from the server
+      removeTodoItem(todo.id); // Remove from the local array
+      removeTodoElement(todo.id); // Remove from the DOM
+    } catch (error) {
+      console.error('Error deleting todo:', error);
+      showModal({
+        title: 'Error',
+        message: 'Failed to delete the todo. Please try again.',
+      });
+    }
   };
 
   if (todo.completed) {
@@ -340,6 +357,7 @@ function clearCompletedTodos() {
     if (todo.completed) {
       removeTodoElement(todo.id);
       removeTodoItem(todo.id);
+      deleteTodo(todo.id);
     }
   });
 }
@@ -373,6 +391,3 @@ function clearAllTodos() {
 }
 
 registerTodoEvents();
-
-// Load todos on page load
-// loadTodos();
