@@ -387,6 +387,7 @@ function clearAllTodos() {
   todos.forEach((todo) => {
     removeTodoElement(todo.id);
     removeTodoItem(todo.id);
+    deleteTodo(todo.id);
   });
 }
 
