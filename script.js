@@ -10,12 +10,10 @@ async function getTodos() {
     throw new Error(`Response status: ${response.status}`);
   }
 
-  const data = await response.json();
+  const data = response.json();
 
   return data;
 }
-
-getTodos();
 
 async function postTodo(todo) {
   const response = await fetch(apiUrl, {
@@ -41,7 +39,9 @@ async function deleteTodo(todoId) {
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to delete todo. Response status: ${response.status}`);
+    throw new Error(
+      `Failed to delete todo. Response status: ${response.status}`
+    );
   }
 }
 
@@ -52,8 +52,6 @@ async function loadTodos() {
     addTodoToDOM(todo);
   });
 }
-
-loadTodos();
 
 function showModal(modalOptions) {
   const modalElement = document.getElementById('modal');
@@ -143,7 +141,7 @@ async function addTodo() {
 
       return;
     }
-  
+
     const newTodo = {
       text: todoText,
       completed: false,
@@ -151,7 +149,7 @@ async function addTodo() {
     };
 
     try {
-            const addedTodo = await postTodo(newTodo);
+      const addedTodo = await postTodo(newTodo);
       todos.push(addedTodo); // Update the local `todos` array
       addTodoToDOM(addedTodo); // Add the todo to the DOM
       input.value = ''; // Clear the input field
@@ -319,7 +317,7 @@ function removeTodoElement(todoId) {
   }
 }
 
-function removeTodo(todo)  {
+function removeTodo(todo) {
   const removeTodoItemAndElement = async () => {
     try {
       await deleteTodo(todo.id); // Delete from the server
@@ -391,4 +389,6 @@ function clearAllTodos() {
   });
 }
 
+loadTodos();
+// getTodos();
 registerTodoEvents();
