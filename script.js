@@ -4,32 +4,35 @@ let todos = [];
 let lastIndex = 0;
 
 function handleApiResponse(response) {
-  if (!response.ok) {
-    throw new Error(`Response status: ${response.status}`);
-  }
+  try {
+    if (!response.ok) {
+      throw new Error(`Response status: ${response.status}`);
+    }
 
-  return response.json();
+    return response.json();
+  } catch (error) {
+    console.error('API request failed:', error);
+    throw error;
+  }
 }
 
 async function fetchApi(apiUrl, method, data, headers) {
-    const _headers = {
+  const _headers = {
     'Content-Type': 'application/json',
     ...headers,
   };
 
   const options = {
     method,
-    headers: _headers, 
-  }
+    headers: _headers,
+  };
 
   if (data) {
     options.body = JSON.stringify(data);
   }
 
-  try {
-    const response = await fetch(apiUrl, options);
-    handleApiResponse(response);
-  }
+  const response = await fetch(apiUrl, options);
+  return handleApiResponse(response);
 }
 
 async function getTodos() {
@@ -41,8 +44,7 @@ async function postTodo(todo) {
 }
 
 async function deleteTodo(todoId) {
-  return fetchApi(`${apiUrl}/${todoId}`, 'DELETE',
-  );
+  return fetchApi(`${apiUrl}/${todoId}`, 'DELETE');
 }
 
 async function loadTodos() {
