@@ -25,52 +25,24 @@ async function fetchApi(apiUrl, method, data, headers) {
   if (data) {
     options.body = JSON.stringify(data);
   }
-  try{
+
+  try {
     const response = await fetch(apiUrl, options);
-    handleApiResponse(response)
+    handleApiResponse(response);
   }
 }
 
 async function getTodos() {
-  const response = await fetch(apiUrl);
-
-  if (!response.ok) {
-    throw new Error(`Response status: ${response.status}`);
-  }
-
-  const data = response.json();
-
-  return data;
+  return fetchApi(apiUrl, 'GET');
 }
 
 async function postTodo(todo) {
-  const response = await fetch(apiUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(todo),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Response status: ${response.status}`);
-  }
-
-  const data = await response.json();
-
-  return data;
+  return fetchApi(apiUrl, 'POST', todo);
 }
 
 async function deleteTodo(todoId) {
-  const response = await fetch(`${apiUrl}/${todoId}`, {
-    method: 'DELETE',
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      `Failed to delete todo. Response status: ${response.status}`
-    );
-  }
+  return fetchApi(`${apiUrl}/${todoId}`, 'DELETE',
+  );
 }
 
 async function loadTodos() {
