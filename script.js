@@ -47,6 +47,10 @@ async function deleteTodo(todoId) {
   return fetchApi(`${apiUrl}/${todoId}`, 'DELETE');
 }
 
+async function patchTodo(todoId, data) {
+  return fetchApi(`${apiUrl}/${todoId}`, 'PATCH', data);
+}
+
 async function loadTodos() {
   todos = await getTodos();
 
@@ -302,6 +306,7 @@ function toggleComplete(todoId, event) {
     } else {
       label.classList.remove('completed'); // Remove line-through
     }
+    patchTodo(todoId, { completed: todo.completed });
   }
 }
 
@@ -392,5 +397,4 @@ function clearAllTodos() {
 }
 
 loadTodos();
-// getTodos();
 registerTodoEvents();
