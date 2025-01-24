@@ -180,11 +180,9 @@ function getTodoElementById(todoId) {
 }
 
 function addNewTodo(text) {
-  const todoId = uuid.v4(); // Generate a new UUID for each todo
   const todo = {
     text: text,
     completed: false,
-    id: todoId,
   };
 
   return todo;
