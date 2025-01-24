@@ -288,6 +288,8 @@ function saveEditedTodo(input, todo) {
   input.replaceWith(label); // Replace the input with the updated label
   todos = updatedTodos; // Update the todos array globally
   saveTodoToLocalStorage(updatedTodos); // Save the updated todos array
+
+  patchTodo(todo.id, { text: newText })
 }
 
 function toggleComplete(todoId, event) {
