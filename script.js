@@ -1,4 +1,8 @@
-const apiUrl = 'http://localhost:3000/todos';
+const apiBaseUrl = 'http://localhost:3000';
+const endpoints = {
+  todos: '/todos',
+};
+
 const localStorageKeyTodos = 'todos';
 let todos = [];
 let lastIndex = 0;
@@ -16,7 +20,7 @@ function handleApiResponse(response) {
   }
 }
 
-async function fetchApi(apiUrl, method, data, headers) {
+async function fetchApi(apiBaseUrl, method, data, headers) {
   const _headers = {
     'Content-Type': 'application/json',
     ...headers,
@@ -31,24 +35,24 @@ async function fetchApi(apiUrl, method, data, headers) {
     options.body = JSON.stringify(data);
   }
 
-  const response = await fetch(apiUrl, options);
+  const response = await fetch(apiBaseUrl, options);
   return handleApiResponse(response);
 }
 
 async function getTodos() {
-  return fetchApi(apiUrl, 'GET');
+  return fetchApi(`${apiBaseUrl}${endpoints.todos}`, 'GET');
 }
 
 async function postTodo(todo) {
-  return fetchApi(apiUrl, 'POST', todo);
+  return fetchApi(`${apiBaseUrl}${endpoints.todos}`, 'POST', todo);
 }
 
-async function deleteTodo(todoId) {
-  return fetchApi(`${apiUrl}/${todoId}`, 'DELETE');
+async function removeTodoFromServer(todoId) {
+  return fetchApi(`${apiBaseUrl}${endpoints.todos}/${todoId}`, 'DELETE');
 }
 
 async function patchTodo(todoId, data) {
-  return fetchApi(`${apiUrl}/${todoId}`, 'PATCH', data);
+  return fetchApi(`${apiBaseUrl}${endpoints.todos}/${todoId}`, 'PATCH', data);
 }
 
 async function loadTodos() {
@@ -130,15 +134,16 @@ function getAllTodosText() {
   });
 }
 
+function formatText(text) {
+  return text.trim().replace(/\s+/g, ' ');
+}
+
 async function addTodo() {
   const input = document.getElementById('todo-input');
-  let todoText = input.value.trim().replace(/\s+/g, ' ');
-  const existingTodosText = getAllTodosText(); // Get existing todos from the DOM
+  let todoText = formatText(input.value);
+  const existingTodosText = getAllTodosText();
 
   if (todoText) {
-    todoText =
-      todoText.charAt(0).toUpperCase() + todoText.slice(1).toLowerCase();
-
     if (existingTodosText.includes(todoText.toUpperCase())) {
       showModal({
         title: 'Warning',
@@ -148,19 +153,13 @@ async function addTodo() {
       return;
     }
 
-    const newTodo = {
-      text: todoText,
-      completed: false,
-      // id: uuid.v4(),
-    };
-
     try {
+      const newTodo = createTodoObject(todoText);
       const addedTodo = await postTodo(newTodo);
-      todos.push(addedTodo); // Update the local `todos` array
-      addTodoToDOM(addedTodo); // Add the todo to the DOM
-      input.value = ''; // Clear the input field
+      todos.push(addedTodo);
+      addTodoToDOM(addedTodo);
+      input.value = '';
     } catch (error) {
-      console.error('Error adding todo:', error);
       showModal({
         title: 'Error',
         message: 'Failed to add the todo. Please try again.',
@@ -179,7 +178,7 @@ function getTodoElementById(todoId) {
   return document.getElementById(`todo-id-${todoId}`);
 }
 
-function addNewTodo(text) {
+function createTodoObject(text) {
   const todo = {
     text: text,
     completed: false,
@@ -195,7 +194,7 @@ function saveTodoToLocalStorage(todoItemsArray) {
   );
 }
 
-function createTodoLabel(todo) {
+function createTodoLabelElement(todo) {
   const label = document.createElement('label');
   label.className = 'todo-label';
   label.innerText = todo.text;
@@ -231,7 +230,7 @@ function addTodoToDOM(todo) {
   const checkbox = todoCheckboxAndLabelWrapperElement.querySelector(
     'input[type="checkbox"]'
   );
-  const label = createTodoLabel(todo);
+  const label = createTodoLabelElement(todo);
 
   todoCheckboxAndLabelWrapperElement.appendChild(label);
 
@@ -262,7 +261,6 @@ function editTodo(todo, event) {
     saveEditedTodo(input, todo);
   });
 
-  // Event listeners for Enter key and blur event
   input.addEventListener('keypress', (event) => {
     if (event.key === 'Enter') {
       input.blur();
@@ -271,23 +269,29 @@ function editTodo(todo, event) {
 }
 
 function saveEditedTodo(input, todo) {
-  const newText = input.value.trim() || todo.text; // Revert if empty
-  const label = createTodoLabel({ ...todo, text: newText }); // Use the function with updated text
+  const newText = formatText(input.value) || todo.text; // Revert if empty
+
+  if (newText === todo.text) {
+    input.replaceWith(createTodoLabelElement(todo)); // Replace with the original label
+    return; // Exit without making an API request
+  }
+
+  const label = createTodoLabelElement({ ...todo, text: newText });
 
   const updatedTodos = todos.map((todoItem) => {
     if (todoItem.id === todo.id) {
-      // Return a new object to ensure immutability
+
       return { ...todoItem, text: newText };
     }
 
     return todoItem;
   });
 
-  input.replaceWith(label); // Replace the input with the updated label
-  todos = updatedTodos; // Update the todos array globally
-  saveTodoToLocalStorage(updatedTodos); // Save the updated todos array
+  input.replaceWith(label);
+  todos = updatedTodos;
+  saveTodoToLocalStorage(updatedTodos);
 
-  patchTodo(todo.id, { text: newText })
+  patchTodo(todo.id, { text: newText });
 }
 
 function toggleComplete(todoId, event) {
@@ -299,24 +303,23 @@ function toggleComplete(todoId, event) {
     saveTodoToLocalStorage(todos);
 
     const todoElement = getTodoElementById(todoId);
-    const label = todoElement.querySelector('.todo-label'); // Locate the label within the todo item
+    const label = todoElement.querySelector('.todo-label');
 
     if (todo.completed) {
-      label.classList.add('completed'); // Add line-through
-    } else {
-      label.classList.remove('completed'); // Remove line-through
+      label.classList.add('completed'); 
+      label.classList.remove('completed');
     }
     patchTodo(todoId, { completed: todo.completed });
   }
 }
 
-function removeTodoItem(todoId) {
+function removeTodoFromArray(todoId) {
   const updatedTodos = todos.filter((todoItem) => todoItem.id !== todoId);
   todos = updatedTodos;
   saveTodoToLocalStorage(updatedTodos);
 }
 
-function removeTodoElement(todoId) {
+function removeTodoFromDOM(todoId) {
   const todoElement = getTodoElementById(todoId);
 
   if (todoElement) {
@@ -325,13 +328,12 @@ function removeTodoElement(todoId) {
 }
 
 function removeTodo(todo) {
-  const removeTodoItemAndElement = async () => {
+  const removeTodoCompletely = async () => {
     try {
-      await deleteTodo(todo.id); // Delete from the server
-      removeTodoItem(todo.id); // Remove from the local array
-      removeTodoElement(todo.id); // Remove from the DOM
+      await removeTodoFromServer(todo.id);
+      removeTodoFromArray(todo.id);
+      removeTodoFromDOM(todo.id);
     } catch (error) {
-      console.error('Error deleting todo:', error);
       showModal({
         title: 'Error',
         message: 'Failed to delete the todo. Please try again.',
@@ -340,7 +342,7 @@ function removeTodo(todo) {
   };
 
   if (todo.completed) {
-    removeTodoItemAndElement();
+    removeTodoCompletely();
   } else {
     showModal({
       title: 'Please confirm',
@@ -350,7 +352,7 @@ function removeTodo(todo) {
         {
           label: 'Delete',
           btnStyle: 'btn-danger',
-          callback: removeTodoItemAndElement,
+          callback: removeTodoCompletely,
         },
       ],
     });
@@ -360,9 +362,9 @@ function removeTodo(todo) {
 function clearCompletedTodos() {
   todos.forEach((todo) => {
     if (todo.completed) {
-      removeTodoElement(todo.id);
-      removeTodoItem(todo.id);
-      deleteTodo(todo.id);
+      removeTodoFromDOM(todo.id);
+      removeTodoFromArray(todo.id);
+      removeTodoFromServer(todo.id);
     }
   });
 }
@@ -390,9 +392,9 @@ function showAllTodos() {
 
 function clearAllTodos() {
   todos.forEach((todo) => {
-    removeTodoElement(todo.id);
-    removeTodoItem(todo.id);
-    deleteTodo(todo.id);
+    removeTodoFromDOM(todo.id);
+    removeTodoFromArray(todo.id);
+    removeTodoFromServer(todo.id);
   });
 }
 
