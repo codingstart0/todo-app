@@ -1,6 +1,14 @@
 const apiBaseUrl = 'http://localhost:3000';
+// const endpoints = {
+//   todos: '/todos',
+// };
+
 const endpoints = {
-  todos: '/todos',
+  getTodos: () => `${apiBaseUrl}/todos`,
+  getTodo: (id) => `${apiBaseUrl}/todos/${id}`,
+  createTodo: () => `${apiBaseUrl}/todos`,
+  updateTodo: (id) => `${apiBaseUrl}/todos/${id}`,
+  deleteTodo: (id) => `${apiBaseUrl}/todos/${id}`,
 };
 
 const localStorageKeyTodos = 'todos';
@@ -39,24 +47,24 @@ async function fetchApi(apiBaseUrl, method, data, headers) {
   return handleApiResponse(response);
 }
 
-async function getTodos() {
-  return fetchApi(`${apiBaseUrl}${endpoints.todos}`, 'GET');
+async function fetchTodosApi() {
+  return fetchApi(endpoints.getTodos(), 'GET');
 }
 
-async function postTodo(todo) {
-  return fetchApi(`${apiBaseUrl}${endpoints.todos}`, 'POST', todo);
+async function createTodoApi(todo) {
+  return fetchApi(endpoints.createTodo(), 'POST', todo);
 }
 
-async function removeTodoFromServer(todoId) {
-  return fetchApi(`${apiBaseUrl}${endpoints.todos}/${todoId}`, 'DELETE');
+async function deleteTodoApi(todoId) {
+  return fetchApi(endpoints.deleteTodo(todoId), 'DELETE');
 }
 
-async function patchTodo(todoId, data) {
-  return fetchApi(`${apiBaseUrl}${endpoints.todos}/${todoId}`, 'PATCH', data);
+async function updateTodoApi(todoId, data) {
+  return fetchApi(endpoints.updateTodo(todoId), 'PATCH', data);
 }
 
 async function loadTodos() {
-  todos = await getTodos();
+  todos = await fetchTodosApi();
 
   todos?.forEach((todo) => {
     addTodoToDOM(todo);
@@ -155,7 +163,7 @@ async function addTodo() {
 
     try {
       const newTodo = createTodoObject(todoText);
-      const addedTodo = await postTodo(newTodo);
+      const addedTodo = await createTodoApi(newTodo);
       todos.push(addedTodo);
       addTodoToDOM(addedTodo);
       input.value = '';
@@ -280,7 +288,6 @@ function saveEditedTodo(input, todo) {
 
   const updatedTodos = todos.map((todoItem) => {
     if (todoItem.id === todo.id) {
-
       return { ...todoItem, text: newText };
     }
 
@@ -291,7 +298,7 @@ function saveEditedTodo(input, todo) {
   todos = updatedTodos;
   saveTodoToLocalStorage(updatedTodos);
 
-  patchTodo(todo.id, { text: newText });
+  updateTodoApi(todo.id, { text: newText });
 }
 
 function toggleComplete(todoId, event) {
@@ -306,10 +313,24 @@ function toggleComplete(todoId, event) {
     const label = todoElement.querySelector('.todo-label');
 
     if (todo.completed) {
-      label.classList.add('completed'); 
+      label.classList.add('completed');
+    } else {
       label.classList.remove('completed');
     }
-    patchTodo(todoId, { completed: todo.completed });
+    updateTodoApi(todoId, { completed: todo.completed });
+  }
+}
+
+async function removeTodoCompletely(todoId) {
+  try {
+    await deleteTodoApi(todoId);
+    removeTodoFromArray(todoId);
+    removeTodoFromDOM(todoId);
+  } catch (error) {
+    showModal({
+      title: 'Error',
+      message: 'Failed to delete the todo. Please try again.',
+    });
   }
 }
 
@@ -328,21 +349,8 @@ function removeTodoFromDOM(todoId) {
 }
 
 function removeTodo(todo) {
-  const removeTodoCompletely = async () => {
-    try {
-      await removeTodoFromServer(todo.id);
-      removeTodoFromArray(todo.id);
-      removeTodoFromDOM(todo.id);
-    } catch (error) {
-      showModal({
-        title: 'Error',
-        message: 'Failed to delete the todo. Please try again.',
-      });
-    }
-  };
-
   if (todo.completed) {
-    removeTodoCompletely();
+    removeTodoCompletely(todo.id);
   } else {
     showModal({
       title: 'Please confirm',
@@ -352,7 +360,7 @@ function removeTodo(todo) {
         {
           label: 'Delete',
           btnStyle: 'btn-danger',
-          callback: removeTodoCompletely,
+          callback: () => removeTodoCompletely(todo.id),
         },
       ],
     });
@@ -362,9 +370,7 @@ function removeTodo(todo) {
 function clearCompletedTodos() {
   todos.forEach((todo) => {
     if (todo.completed) {
-      removeTodoFromDOM(todo.id);
-      removeTodoFromArray(todo.id);
-      removeTodoFromServer(todo.id);
+      removeTodoCompletely(todo.id);
     }
   });
 }
@@ -392,9 +398,7 @@ function showAllTodos() {
 
 function clearAllTodos() {
   todos.forEach((todo) => {
-    removeTodoFromDOM(todo.id);
-    removeTodoFromArray(todo.id);
-    removeTodoFromServer(todo.id);
+    removeTodoCompletely(todo.id);
   });
 }
 
