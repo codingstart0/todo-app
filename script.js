@@ -14,51 +14,33 @@ let lastIndex = 0;
 
 function handleApiResponse(response) {
   try {
-    if (!response.ok) {
-      throw new Error(`Response status: ${response.status}`);
-    }
-
-    return response.json();
+    return response.data;
   } catch (error) {
     console.error('API request failed:', error);
     throw error;
   }
 }
 
-async function fetchApi(apiBaseUrl, method, data, headers) {
-  const _headers = {
-    'Content-Type': 'application/json',
-    ...headers,
-  };
-
-  const options = {
-    method,
-    headers: _headers,
-  };
-
-  if (data) {
-    options.body = JSON.stringify(data);
+async function apiRequest(method, url, data = null) {
+  try {
+    const response = await axios({ method, url, data });
+    return handleApiResponse(response);
+  } catch (error) {
+    console.error(
+      `API request failed (${method.toUpperCase()} ${url}):`,
+      error
+    );
+    throw error;
   }
-
-  const response = await fetch(apiBaseUrl, options);
-  return handleApiResponse(response);
 }
 
-async function fetchTodosApi() {
-  return fetchApi(endpoints.getTodos(), 'GET');
-}
-
-async function createTodoApi(todo) {
-  return fetchApi(endpoints.createTodo(), 'POST', todo);
-}
-
-async function deleteTodoApi(todoId) {
-  return fetchApi(endpoints.deleteTodo(todoId), 'DELETE');
-}
-
-async function updateTodoApi(todoId, data) {
-  return fetchApi(endpoints.updateTodo(todoId), 'PATCH', data);
-}
+const fetchTodosApi = () => apiRequest('get', endpoints.getTodos());
+const createTodoApi = (todo) =>
+  apiRequest('post', endpoints.createTodo(), todo);
+const deleteTodoApi = (todoId) =>
+  apiRequest('delete', endpoints.deleteTodo(todoId));
+const updateTodoApi = (todoId, data) =>
+  apiRequest('patch', endpoints.updateTodo(todoId), data);
 
 async function loadTodos() {
   todos = await fetchTodosApi();
