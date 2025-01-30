@@ -125,33 +125,38 @@ function formatText(text) {
   return text.trim().replace(/\s+/g, ' ');
 }
 
+function checkExistingTodo(text, excludeTodoId = null) {
+  const existingTodosText = todos
+    .filter((todo) => todo.id !== excludeTodoId)
+    .map((todo) => todo.text.toUpperCase());
+
+  if (existingTodosText.includes(text.toUpperCase())) {
+    showModal({
+      title: 'Warning',
+      message: 'This todo already exists!',
+    });
+    return true; // Indicates that a duplicate exists
+  }
+  return false; // No duplicates found
+}
+
 async function addTodo() {
   const input = document.getElementById('todo-input');
   let todoText = formatText(input.value);
-  const existingTodosText = getAllTodosText();
 
-  if (todoText) {
-    if (existingTodosText.includes(todoText.toUpperCase())) {
-      showModal({
-        title: 'Warning',
-        message: 'This todo already exists!',
-      });
+  if (!todoText || checkExistingTodo(todoText)) return;
 
-      return;
-    }
-
-    try {
-      const newTodo = createTodoObject(todoText);
-      const addedTodo = await createTodoApi(newTodo);
-      todos.push(addedTodo);
-      addTodoToDOM(addedTodo);
-      input.value = '';
-    } catch (error) {
-      showModal({
-        title: 'Error',
-        message: 'Failed to add the todo. Please try again.',
-      });
-    }
+  try {
+    const newTodo = createTodoObject(todoText);
+    const addedTodo = await createTodoApi(newTodo);
+    todos.push(addedTodo);
+    addTodoToDOM(addedTodo);
+    input.value = '';
+  } catch (error) {
+    showModal({
+      title: 'Error',
+      message: 'Failed to add the todo. Please try again.',
+    });
   }
 }
 
@@ -258,24 +263,19 @@ function editTodo(todo, event) {
 function saveEditedTodo(input, todo) {
   const newText = formatText(input.value) || todo.text; // Revert if empty
 
-  if (newText === todo.text) {
+  if (newText === todo.text || checkExistingTodo(newText, todo.id)) {
     input.replaceWith(createTodoLabelElement(todo)); // Replace with the original label
     return; // Exit without making an API request
   }
 
   const label = createTodoLabelElement({ ...todo, text: newText });
 
-  const updatedTodos = todos.map((todoItem) => {
-    if (todoItem.id === todo.id) {
-      return { ...todoItem, text: newText };
-    }
-
-    return todoItem;
-  });
+  todos = todos.map((todoItem) =>
+    todoItem.id === todo.id ? { ...todoItem, text: newText } : todoItem
+  );
 
   input.replaceWith(label);
-  todos = updatedTodos;
-  saveTodoToLocalStorage(updatedTodos);
+  saveTodoToLocalStorage(todos);
 
   updateTodoApi(todo.id, { text: newText });
 }
