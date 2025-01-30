@@ -21,7 +21,7 @@ function handleApiResponse(response) {
   }
 }
 
-async function apiRequest(method, url, data = null) {
+async function apiRequest(method, url, data) {
   try {
     const response = await axios({ method, url, data });
     return handleApiResponse(response);
@@ -125,7 +125,7 @@ function formatText(text) {
   return text.trim().replace(/\s+/g, ' ');
 }
 
-function checkExistingTodo(text, excludeTodoId = null) {
+function todoExists(text, excludeTodoId) {
   const existingTodosText = todos
     .filter((todo) => todo.id !== excludeTodoId)
     .map((todo) => todo.text.toUpperCase());
@@ -144,7 +144,7 @@ async function addTodo() {
   const input = document.getElementById('todo-input');
   let todoText = formatText(input.value);
 
-  if (!todoText || checkExistingTodo(todoText)) return;
+  if (!todoText || todoExists(todoText)) return;
 
   try {
     const newTodo = createTodoObject(todoText);
@@ -263,7 +263,7 @@ function editTodo(todo, event) {
 function saveEditedTodo(input, todo) {
   const newText = formatText(input.value) || todo.text; // Revert if empty
 
-  if (newText === todo.text || checkExistingTodo(newText, todo.id)) {
+  if (newText === todo.text || todoExists(newText, todo.id)) {
     input.replaceWith(createTodoLabelElement(todo)); // Replace with the original label
     return; // Exit without making an API request
   }
